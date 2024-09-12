@@ -4,6 +4,8 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Task
 from .forms import TaskForm
 import json
+from django.shortcuts import get_object_or_404
+
 # Create your views here.
 
 @api_view(['GET'])
@@ -45,13 +47,19 @@ def CreateTask(request):
 def UpdateTask(request, id):
         try:    
                 data = json.loads(request.body)
-                form =  TaskForm(data)
-                task = Task.objects.get(pk=id)
-                
+        except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        task = get_object_or_404(Task, id=id)
+        form = TaskForm(data, instance=task)
+        if form.is_valid():
+                form.save()
+                return JsonResponse({"message": "Updated Task",  "Task":{
+                        "id": task.id,
+                        "name": task.name,
+                        "is done": task.done
+                }}) 
 
-        except Task.DoesNotExist:
-                return JsonResponse({'error': 'Task not found'}, status = 404)
-        return JsonResponse({"response": "Update task"})   
+        return JsonResponse({"message": "Updated task"})   
 
 @api_view(['DELETE'])
 def DeleteTask(request, id):
