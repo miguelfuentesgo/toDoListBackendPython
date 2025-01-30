@@ -6,7 +6,6 @@ from .forms import TaskForm
 import json
 from django.shortcuts import get_object_or_404
 
-# Create your views here.
 
 @api_view(['GET'])
 def GetTask(request, id):
