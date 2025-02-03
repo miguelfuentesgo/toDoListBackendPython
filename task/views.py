@@ -12,7 +12,6 @@ from django.shortcuts import get_object_or_404
 def GetTask(request, id):
         try:
                 task = Task.objects.get(pk=id)
-
                 data = {
                         'id': task.id,
                         'name': task.name,
@@ -20,7 +19,7 @@ def GetTask(request, id):
                 }
                 return JsonResponse({ "response": "Get task", 'task': data})
         except Task.DoesNotExist:
-                return Http404("Item not found")
+                return JsonResponse({'error': f'Task with id {id},  NOT FOUND'}, status = 404)
 @api_view(['POST'])
 def CreateTask(request):
         try:
@@ -49,21 +48,24 @@ def UpdateTask(request, id):
                 data = json.loads(request.body)
         except json.JSONDecodeError:
                 return JsonResponse({'error': 'Invalid JSON'}, status=400)
-        task = get_object_or_404(Task, id=id)
-        form = TaskForm(data, instance=task)
-        if form.is_valid():
-                form.save()
-                return JsonResponse({"message": "Updated Task",  "Task":{
-                        "id": task.id,
-                        "name": task.name,
-                        "is done": task.done
-                }}) 
+        
+        try:
+                task = Task.objects.get(pk=id)
+                form = TaskForm(data, instance=task)
+                if form.is_valid():
+                        form.save()
+                        return JsonResponse({"message": "Updated Task",  "Task":{
+                                "id": task.id,
+                                "name": task.name,
+                                "is done": task.done
+                        }}) 
 
-        return JsonResponse({"message": "Updated task"})   
+                return JsonResponse({"message": "Updated task"})   
+        except Task.DoesNotExist:
+                return JsonResponse({'error': f'Task with id {id},  NOT FOUND'}, status = 404)
 
 @api_view(['DELETE'])
 def DeleteTask(request, id):
-        print('id ----->', id)
         try:
                 task = Task.objects.get(pk=id)
                 task.delete()
