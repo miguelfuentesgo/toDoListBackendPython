@@ -12,12 +12,13 @@ from django.shortcuts import get_object_or_404
 def GetTask(request, id):
         try:
                 task = Task.objects.get(pk=id)
+                
                 data = {
                         'id': task.id,
-                        'name': task.name,
-                        'maked as done': task.done 
+                        'description': task.description,
+                        'completed': task.completed 
                 }
-                return JsonResponse({ "response": "Get task", 'task': data})
+                return JsonResponse({ "response": "getTask", 'task': data})
         except Task.DoesNotExist:
                 return JsonResponse({'error': f'Task with id {id},  NOT FOUND'}, status = 404)
 @api_view(['POST'])
@@ -28,12 +29,13 @@ def CreateTask(request):
 
                 if form.is_valid():
                         task = form.save()
+                        task.completed = False
                         response = {
-                                "message": "Task created",
+                                "response": "createTask",
                                 "task": {
                                         'id': task.id,
-                                        'name': task.name,
-                                        'done': task.done
+                                        'description': task.description,
+                                        'completed': task.completed
                                 }
                         }
                         return JsonResponse(response)
@@ -54,13 +56,11 @@ def UpdateTask(request, id):
                 form = TaskForm(data, instance=task)
                 if form.is_valid():
                         form.save()
-                        return JsonResponse({"message": "Updated Task",  "Task":{
+                        return JsonResponse({"message": "updateTask",  "task":{
                                 "id": task.id,
-                                "name": task.name,
-                                "is done": task.done
-                        }}) 
-
-                return JsonResponse({"message": "Updated task"})   
+                                "description": task.description,
+                                "completed": task.completed
+                        }})  
         except Task.DoesNotExist:
                 return JsonResponse({'error': f'Task with id {id},  NOT FOUND'}, status = 404)
 
@@ -69,11 +69,11 @@ def DeleteTask(request, id):
         try:
                 task = Task.objects.get(pk=id)
                 task.delete()
-                return JsonResponse({"message": "Deleted task",
+                return JsonResponse({"response": "deleteTask",
                                      "task": {
                                         'id': id,
-                                        'name': task.name,
-                                        'done': task.done
+                                        'description': task.description,
+                                        'completed': task.completed
                                 } })
         except Task.DoesNotExist:
                 return JsonResponse({'error': f'Task with id {id},  NOT FOUND'}, status = 404)
@@ -84,5 +84,5 @@ def GetAll(request):
         tasksResponse = []
         tasks = Task.objects.all()
         for task in tasks:
-                tasksResponse.append({ "id": task.id, "task name": task.name, "task is done": task.done})
-        return JsonResponse({ "response": "Get All", 'tasks': tasksResponse})
+                tasksResponse.append({ "id": task.id, "description": task.description, "completed": task.completed})
+        return JsonResponse({ "response": "getAll", 'tasks': tasksResponse})
